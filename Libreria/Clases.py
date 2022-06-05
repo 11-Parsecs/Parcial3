@@ -2,7 +2,8 @@ from types import NoneType
 import matplotlib.pyplot as plt
 from numpy import linspace
 
-Txt1="No se pueden sumar Contables con diferentes asignaciones."
+Txt1="No se pueden operar Contables con diferentes asignaciones."
+Txt2="Tipos de dato incorrectos."
 
 class Contable:
     '''
@@ -15,19 +16,19 @@ class Contable:
         self.n=n
         self.a=a
         self.T=T
-    def __str__(self):
+    def __str__(self): #Representación
         return str(self.m)+"}->"+str(self.n)+"]->"+str(self.a)
-    def __add__(self,other):
+    def __add__(self,other): #Suma con +
         if self.m==other.m and self.n==other.n:
             return Contable(self.m,self.n,self.a+other.a)
         else:
             print(Txt1)
-    def __truediv__(self,other):
+    def __truediv__(self,other): #División con /
         if self.m==other.m and self.n==other.n:
             return Contable(self.m,self.n,self.a/other.a,self.T+other.T)
         else:
             print(Txt1)
-    def __iadd__(self, other):
+    def __iadd__(self, other): #Suma con +=
         return self+other
 
 class Espec_Contable(Contable):
@@ -47,26 +48,40 @@ class Dato:
         self.M=M
         self.n=n
         self.m=m
-    def __str__(self):
+    def __str__(self): #Representación
         return str(self.N)+"}->"+str(self.n)+"-s-"+str(self.m)+"<-{"+str(self.M)
-    def Tomar(self,A,a,Txt):
+    def Tomar(self,A,a,Txt="",Prom=False):
+        '''
+        Devuelve un Contable sumando los valores de la base de datos "A" coincidentes
+        a la fila y a las columnas "self.n" de "self.N" y "self.m" de "self.M"
+        ----------
+        A : list of lists
+            Matriz con la información de una base de datos
+        a : str
+            Nombre de la columna de datos a tomar
+        Txt : str, optional
+            Guarda el Contable de salida bajo un nombre
+        Prom : bool, optional
+            True si el Contable de salida es el promedio de los datos y False si es sólo la suma
+        '''
         Cuenta=0
         U=Contable(self.M,self.n,0)
         f1=A[0].index(self.N)
-        f2=A[0].index(a) 
+        f2=A[0].index(a)#Columna de datos a tomar
         f3=A[0].index(self.M)
         for L in A:
             if L[f1]==self.n and L[f3]==self.m:
                 try:
                     Cuenta+=1
-                    U+=Contable(self.M,self.n,eval(L[f2]))
+                    U+=Contable(self.M,self.n,eval(L[f2]))#Suma los datos tomados
                 except:
                     Cuenta+=1
                     U+=Contable(self.M,self.n,0)
-        if Cuenta!=0:
-            U=U/Contable(self.M,self.n,Cuenta,Txt)
+        if Cuenta!=0 and Prom:
+            if Prom:
+                U=U/Contable(self.M,self.n,Cuenta,Txt)#Promedio de los datos
         else:
-            U=NoneType
+            U=NoneType #Si hay algún error
         return U
 
 class Proceso:
@@ -75,39 +90,46 @@ class Proceso:
     '''
     def __init__(self,A):
         self.A=A
-    def __str__(self):
+    def __str__(self): #Representación
         return "[{"+str(self.A)+"}]"
-    def __setitem__(self,N_Dato,Valor):
+    def __setitem__(self,N_Dato,Valor): #Mutabilidad
         try:
             self.A[N_Dato]=Valor
         except IndexError:
             self.A.append(Valor)
-    def __getitem__(self,N_Dato):
+    def __getitem__(self,N_Dato): #Itemización
         return self.A[N_Dato]
     def mostrar(self,reg=False):
+        '''
+        Grafica los datos de contenidos en la clase Proceso. El término "self.A" debe 
+        ser una lista de listas de clases Contable.
+        ----------
+        reg: bool, optional
+            True para graficar regresión lineal.
+        '''
         if type(self.A)==list:
             Tiempo=0
             X=[]
             Y=[]
             for L in self.A:
-                if type(L)==list:
+                if type(L)==list: #Se asegura del tipo de datos
                     for D in L:
                         if type(D)==Contable:
-                            X.append(D.T)#D.n)
+                            X.append(D.T) #Texto asociado a los Contable
                             Y.append(D.a)
                             Tiempo+=2
                         else:
                             break
                 else:
-                    print("Eso no se puede")
+                    print(Txt2)
 
-            fig=plt.figure()
+            fig=plt.figure() #Crea la figura
             fig.set_figwidth(20)
             fig.set_figheight(6.5)
             ax=fig.add_subplot(1,1,1)
-            ax.plot(X,Y,'-og')
+            ax.plot(X,Y,'-og') #Muestra los datos unidos por líneas
             
-            if reg:
+            if reg: #Hace la regresión en caso de pedirla
                 Xn=[]
                 Sxi=0
                 Sxi2=0
@@ -131,22 +153,4 @@ class Proceso:
             plt.grid()
             plt.show()
         else:
-            print("Eso no se puede")
-
-Dat=[]
-
-f=open("C:/Users/Juan Pablo/Downloads/Combustible.csv", encoding="utf8")
-for T in  f:
-    Dat.append(T.split(","))
-f.close()
-
-P=Proceso([])
-In=0
-for k in range(2017,2023):
-    Anual=[]
-    for l in range(1,13):
-        Anual.append(Dato("Periodo",str(k),"Mes",str(l)).Tomar(Dat,"Precio",str(k)+"-"+str(l)))
-    P[In]=Anual
-    In+=1
-
-P.mostrar(True)
+            print(Txt2)
